@@ -2,11 +2,12 @@
 //
 
 #include <iostream>
+#include <iomanip>
 #include <stdlib.h>
 int join_sticks(int num, int* sticks);
 int cmp ( const void *a , const void *b );
-bool check_len(int len, int num, int* sticks);
-bool pk_stick(int num, int* sticks, int remain, int head, int &count);
+bool check_len(int len, int num, int* sticks, int* mark);
+bool pk_stick(int len, int num, int* sticks, int* mark, int remain, int head);
 int main(int argc, char *argv[])
 {
     int num;
@@ -37,10 +38,11 @@ int join_sticks(int num, int* sticks)
         if(a * i == sum){
             // std::cout << "try:"<< i << std::endl; // test
             int sticks_cp[64];
+            int mark[64] = {0};
             for (int i = 0; i < num; i++) {
                 sticks_cp[i] = sticks[i];
             }
-            if (check_len(i, num, sticks_cp)){
+            if (check_len(i, num, sticks_cp, mark)){
                 return i;
             }
             // std::cout << std::endl; // test
@@ -49,53 +51,69 @@ int join_sticks(int num, int* sticks)
     // test
     return sum;
 }
-bool check_len(int len, int num, int* sticks)
+bool check_len(int len, int num, int* sticks, int* mark_pre)
 {
-    // std::cout << sticks[0] << " ";          // test
-    int remain = len - sticks[0]; //第一根棍子一定要用最大的
-    sticks[0] = 0;
-    int count = 1;
-    int head = 1;
-    bool result = pk_stick(num, sticks, remain, head, count);
-
-    if(result){
-        // std::cout << std::endl;               // test
-        qsort(sticks, num, sizeof(int), cmp);    // 贪心,成功拼接的棍子不会拆开
-        if(sticks[0] == 0){
-            return true;
-        }
-        return check_len(len, num - count, sticks);
+    // std::cout<< "check_len" << std::endl;
+    int mark[64];
+    for (int i = 0; i < num; i++) {
+        mark[i] = mark_pre[i];
     }
-    else
-        //        std::cout << remain << std::endl;
-        return false;
+    int head = -1;
+    for (int i = 0; i < num; i++) {
+        if(mark[i] == 0){
+            head = i;
+            break;
+        }
+    }
+    if(head == -1){
+        return true;
+    }
+    // std::cout << sticks[head] << " ";       // test
+    int remain = len - sticks[head];        //第一根棍子一定要用最大的
+    mark[head] = 1;                         // 标记被用了
+    bool result =  pk_stick(len, num, sticks, mark, remain, head + 1);
+    return result;
 }
 int cmp ( const void *a , const void *b )
 {
     return *(int *)b - *(int *)a;
 }
-bool pk_stick(int num, int* sticks, int remain, int head, int &count)
+bool pk_stick(int len, int num, int* sticks, int* mark_pre, int remain, int head)
 {
+    int mark[64];
+    for (int i = 0; i < num; i++) {
+        mark[i] = mark_pre[i];
+    }
     if(remain == 0){
-        return true;
+        // std::cout << std::endl;
+        // for (int i = 0; i < num; i++) {
+        //     std::cout<<std::setw(2) << sticks[i];
+        // }
+        // std::cout << std::endl;
+        // for (int i = 0; i < num; i++) {
+        //     std::cout <<std::setw(2)<<mark[i];
+        // }
+        // std::cout << std::endl;
+        return check_len(len, num, sticks, mark);
     }
     // 选择一下个棍子
     for (int i = head; i < num; i++) {
-        if(remain >= sticks[i]){
-            bool one_try =  pk_stick(num, sticks, remain - sticks[i], i +1, count);
-            if(one_try){
-                // std::cout << sticks[i] << " "; // test
-                sticks[i] = 0; // 被用了
-                count++;
-                return true;
-            }
-            else{
-                while (sticks[i]==sticks[i+1]) {
-                    i++;
-                }
-                ;               // next try
-            }
+        if(remain >= sticks[i] and mark[i] == 0){
+             mark[i] = 1;
+             // std::cout<< sticks[i] << " ";
+             bool result =  pk_stick(len, num, sticks, mark, remain - sticks[i], i +1);
+             if(result){
+                 return true;
+             }
+             else{
+                 mark[i] = 0;
+                 while (sticks[i]==sticks[i+1]) {
+                     i++;
+                 }
+                 ;               // next try
+             }
         }
     }
+    // std::cout<< "no fit stick"<<std::endl;
     return false;
 }
