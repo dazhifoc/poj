@@ -4,12 +4,17 @@
 #define T 1000
 using namespace std;
 double check_difficulty(double p[T][M], int t, int m){
-    for (int i = 0; i < t; i++) {
+    // 每队分别计算
+    double dp[T][M][M];
+    for (int team = 0; team < t; team++) {
+        double *p_each = &p[team][0];
+        double *dp_each = &dp[team][0][0];
         for (int j = 0; j < m; j++) {
-            cout << p[i][j] << " ";
+            cout << p_each[j] << " ";
         }
         cout << endl;
     }
+    // 每队至少答对一题
     return 0;
 }
 int main(int argc, char *argv[])
