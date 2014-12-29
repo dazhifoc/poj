@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
     int n;
     double p[T][M];
     cin >> m >> t >> n;
+    cout.setf(ios::fixed);
     while(m){
         for (int i = 0; i < t; i++) {
             for (int j = 0; j < m; j++) {
