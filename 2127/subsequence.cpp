@@ -21,8 +21,7 @@ public:
     D2vector(){};
     ~D2vector(){};
     void push(int val);
-    vector<int>::size_type get_mlen();
-    vector<int> get_seq();
+    vector<int> get_mlen();
 };
 void D2vector::push(int val)
 {
@@ -32,43 +31,42 @@ void D2vector::push(int val)
         m_coms.push_back(seq);
     }
     else{
-        // 假设子序列按元素多少排列,一量新元素加到大子序列上,
-        // 小子序列就没有存在的意义,可以直接丢弃
-        dvect::iterator pos = m_coms.begin();
-        for (; pos < m_coms.end(); pos++) {
-            if(val > pos->back() ){
-                pos->push_back(val);
-                break;
+        dvect::iterator push_candidate = m_coms.end();
+        int candidate_len = 0;
+        for (dvect::iterator pos = m_coms.begin(); pos < m_coms.end(); pos++) {
+            if(val > pos->back() and pos->size() > candidate_len ){
+                candidate_len = pos->size();
+                push_candidate = pos;
             }
         }
-        if(m_coms.end() == pos){
+        if(push_candidate == m_coms.end()){
             vector<int> seq;
             seq.push_back(val);
             m_coms.push_back(seq);
         }
         else{
-            m_coms.erase(pos + 1, m_coms.end());
-            // 排序,保证按元素多少排列
-            sort(m_coms.begin(),m_coms.end(),more_vectors);
+            vector<int> seq(*push_candidate);
+            seq.push_back(val);
+            m_coms.push_back(seq);
         }
     }
 }
-vector<int>::size_type D2vector::get_mlen()
+vector<int> D2vector::get_mlen()
 {
-    if(m_coms.size() == 0){
-        return 0;
+    dvect::iterator push_candidate = m_coms.end();
+    int candidate_len = 0;
+    for (dvect::iterator pos = m_coms.begin(); pos < m_coms.end(); pos++) {
+        if(pos->size() > candidate_len ){
+            candidate_len = pos->size();
+            push_candidate = pos;
+        }
     }
-    else
-        return m_coms.begin()->size();
-}
-vector<int> D2vector::get_seq()
-{
-    if(m_coms.size() == 0){
+    if(push_candidate == m_coms.end()){
         return vector<int>();
     }
-    else
-        return m_coms.front();
-
+    else{
+        return *push_candidate;
+    }
 }
 int main(int argc, char *argv[])
 {
@@ -79,29 +77,24 @@ int main(int argc, char *argv[])
             cin >> seq[i][j];
         }
     }
-    D2vector* dp[M][M];
-    D2vector* result = new D2vector[num[A] + num[B] -1];
+    D2vector* dp[M+1][M+1];
+    D2vector* result = new D2vector[num[A] + num[B] + 1];
     D2vector* iter = result;
-    for (int j = 0; j < num[B]; j++) {
+    for (int j = 0; j <= num[B]; j++) {
         dp[0][j] = iter++;
-        if(seq[A][0] == seq[B][j]){
-            dp[0][j] -> push(seq[A][0]);
-        }
     }
-    for (int i = 1; i < num[A]; i++) {
+    for (int i = 1; i <= num[A]; i++) {
         dp[i][0] = iter++;
-        if(seq[B][0] == seq[A][i]){
-            dp[i][0] -> push(seq[B][0]);
-        }
     }
-    for (int i = 1; i < num[A]; i++) {
-        for (int j = 1; j < num[B]; j++) {
-            if(seq[A][i] == seq[B][j]){
+    for (int i = 1; i <= num[A]; i++) {
+        for (int j = 1; j <= num[B]; j++) {
+            if(seq[A][i-1] == seq[B][j-1]){
+                // 逻辑有问题, 指针传递, 会使后面的结果覆盖前面, 影响别外的传递路线
                 dp[i][j] = dp[i-1][j-1];
-                dp[i][j] -> push(seq[A][i]);
+                dp[i][j] -> push(seq[A][i-1]);
             }
             else{
-                if(dp[i][j-1] -> get_mlen() > dp[i-1][j] -> get_mlen()){
+                if((dp[i][j-1] -> get_mlen()).size() > (dp[i-1][j] -> get_mlen()).size()){
                     dp[i][j] = dp[i][j-1];
                 }
                 else
@@ -111,15 +104,15 @@ int main(int argc, char *argv[])
 
     }
     D2vector* max_result = result;
-    vector<int>::size_type max_length = result -> get_mlen();
+    vector<int>::size_type max_length = (result -> get_mlen()).size();
     for (int i = 1; i < num[A] + num[B] -1; i++) {
-        if(result[i].get_mlen() > max_length){
-            max_length = result[i].get_mlen();
+        if(result[i].get_mlen().size() > max_length){
+            max_length = result[i].get_mlen().size();
             max_result = &result[i];
         }
     }
     cout << max_length << endl;
-    vector<int> max_seq = max_result -> get_seq();
+    vector<int> max_seq = max_result -> get_mlen();
     copy(max_seq.begin(), max_seq.end(), ostream_iterator<int>(cout," "));
     cout << endl;
     delete [] result;
